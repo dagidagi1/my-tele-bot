@@ -1,39 +1,91 @@
-import time
-import telebot
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# This program is dedicated to the public domain under the CC0 license.
 
-TOKEN = "your bot token here"
-bot = telebot.TeleBot(token=TOKEN)
+"""
+Simple Bot to reply to Telegram messages.
 
-def findat(msg):
-    # from a list of texts, it finds the one with the '@' sign
-    for i in msg:
-        if '@' in i:
-            return i
+First, a few handler functions are defined. Then, those functions are passed to
+the Dispatcher and registered at their respective places.
+Then, the bot is started and runs until we press Ctrl-C on the command line.
 
-@bot.message_handler(commands=['start']) # welcome message handler
-def send_welcome(message):
-    bot.reply_to(message, '(placeholder text)')
+Usage:
+Basic Echobot example, repeats messages.
+Press Ctrl-C on the command line or send a signal to the process to stop the
+bot.
+"""
 
-@bot.message_handler(commands=['help']) # help message handler
-def send_welcome(message):
-    bot.reply_to(message, 'ALPHA = FEATURES MAY NOT WORK')
+import logging
 
-@bot.message_handler(func=lambda msg: msg.text is not None and '@' in msg.text)
-# lambda function finds messages with the '@' sign in them
-# in case msg.text doesn't exist, the handler doesn't process it
-def at_converter(message):
-    texts = message.text.split()
-    at_text = findat(texts)
-    if at_text == '@': # in case it's just the '@', skip
-        pass
-    else:
-        insta_link = "https://instagram.com/{}".format(at_text[1:])
-        bot.reply_to(message, insta_link)
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
+# Enable logging
+logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                    level=logging.INFO)
 
-while True:
-    try:
-        bot.polling(none_stop=True)
-        # ConnectionError and ReadTimeout because of possible timout of the requests library
-        # maybe there are others, therefore Exception
-    except Exception:
-        time.sleep(15)
+logger = logging.getLogger(__name__)
+
+
+# Define a few command handlers. These usually take the two arguments update and
+# context. Error handlers also receive the raised TelegramError object in error.
+def start(update, context):
+    """Send a message when the command /start is issued."""
+    update.message.reply_text('Hi!')
+
+def x(update, context):
+    update.message.reply_text('gavno!!!')
+    print(update.message)
+    myId = 846485043
+    t = update.message.from_user['username'] + ': ' + update.message.text[3:]
+    context.bot.send_message(chat_id= myId, text = t)
+  
+def help(update, context):
+    """Send a message when the command /help is issued."""
+    update.message.reply_text('Help!')
+
+
+def echo(update, context):
+    """Echo the user message."""
+    update.message.reply_text(update.message.text)
+
+
+def error(update, context):
+    """Log Errors caused by Updates."""
+    logger.warning('Update "%s" caused error "%s"', update, context.error)
+
+def msg_inter(update, context):
+  tokens= update.message.text.split()
+  if tokens[-1] == 'g':
+    update.message.reply_text('good')
+  print(tokens)
+  
+
+def main():
+    """Start the bot."""
+    # Create the Updater and pass it your bot's token.
+    # Make sure to set use_context=True to use the new context based callbacks
+    # Post version 12 this will no longer be necessary
+    updater = Updater("5223351005:AAE1_URJnE6iK_zSK7TXLaBklevmZIloe68", use_context=True)
+
+    # Get the dispatcher to register handlers
+    dp = updater.dispatcher
+    # on different commands - answer in Telegram
+    dp.add_handler(CommandHandler("start", start))
+    dp.add_handler(CommandHandler("help", help))
+    dp.add_handler(CommandHandler("x", x))
+
+    # on noncommand i.e message - echo the message on Telegram
+    dp.add_handler(MessageHandler(Filters.text, echo))
+
+    # log all errors
+    dp.add_error_handler(error)
+
+    # Start the Bot
+    updater.start_polling()
+
+    # Run the bot until you press Ctrl-C or the process receives SIGINT,
+    # SIGTERM or SIGABRT. This should be used most of the time, since
+    # start_polling() is non-blocking and will stop the bot gracefully.
+    updater.idle()
+   
+if __name__ == '__main__':
+    main()
